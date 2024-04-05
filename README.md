@@ -4,6 +4,7 @@
  Current projects:
  
  * [dng_convert](dng_convert) is a simple tool for batch converting DNG and HEIC format image files
+ * [html_to_markdown](html_to_markdown) is a fast, efficient tool for converting HTML to Markdown format output.
  
  Old small things:
  
