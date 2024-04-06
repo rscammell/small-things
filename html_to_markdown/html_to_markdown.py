@@ -2,13 +2,13 @@
 # Convert HTMl to plaintext in markdown format
 # (C) 2024 Rupert Scammell <rupert.scammell@gmail.com>
 # This software is licensed under the 3-clause BSD license specified at https://opensource.org/license/BSD-3-clause
-# Version 1.0
-# January, 2024
+# Originally written January, 2024
+# Current version: https://github.com/rscammell/small-things/tree/main/html_to_markdown
 
 # Dependencies: pip install beautifulsoup4
 # TODO - Does not yet convert all tags to appropriate Markdown, but still produces clean and usable output.
 
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup, Comment, NavigableString
 import sys
 import argparse
 import re
@@ -16,6 +16,10 @@ import re
 def process_html(html_content, omit_links, debug):
     soup = BeautifulSoup(html_content, "html.parser")
     
+    # Remove all comments
+    for comments in soup.findAll(string=lambda string:isinstance(string, Comment)):
+        comments.extract()
+        
     # Remove all script tags, including those with attributes
     for script in soup.find_all("script"):
         script.decompose()
@@ -116,6 +120,22 @@ def process_html(html_content, omit_links, debug):
                     return "(blockquote)-none-"
                 else:
                     return ""
+        
+        # Use fenced code style (triple back-ticks) rather than indents for clarity
+        elif tag.name == "code":
+            tag_text = "".join(str(child) for child in tag.children)
+            if tag_text.strip():  # Check if the tag_text is not just whitespace
+                if debug:
+                    return "```\n" + tag_text + "\n```(code)"
+                else:
+                    return "```\n" + tag_text + "\n```"
+            else:
+                if debug:
+                    return "(code)-none-"
+                else:
+                    return ""
+
+
                     
         elif tag.name == "a":
             if omit_links:
@@ -135,6 +155,12 @@ def process_html(html_content, omit_links, debug):
                 return "\n(br)"
             else:
                 return "\n"
+        
+        elif tag.name == "hr":
+            if debug:
+                return "\n(hr)"
+            else:
+                return "---\n"
                 
         else:
             # For tags that are not specifically handled, return their string representation
