@@ -126,17 +126,15 @@ def process_html(html_content, omit_links, debug):
             tag_text = "".join(str(child) for child in tag.children)
             if tag_text.strip():  # Check if the tag_text is not just whitespace
                 if debug:
-                    return "```\n" + tag_text + "\n```(code)"
+                    return "```" + tag_text + "```(code)"
                 else:
-                    return "```\n" + tag_text + "\n```"
+                    return "```" + tag_text + "```"
             else:
                 if debug:
                     return "(code)-none-"
                 else:
                     return ""
-
-
-                    
+                   
         elif tag.name == "a":
             if omit_links:
                 if debug:
@@ -161,7 +159,10 @@ def process_html(html_content, omit_links, debug):
                 return "\n(hr)"
             else:
                 return "---\n"
-                
+        
+        elif tag.name == 'table':
+            return convert_table_to_markdown(tag)
+        
         else:
             # For tags that are not specifically handled, return their string representation
             tag_text = process_tag_children(tag)
@@ -222,6 +223,27 @@ def process_html(html_content, omit_links, debug):
         return text
 
     return process_tags(soup)
+
+# First pass at table conversion. Needs refinement.
+def convert_table_to_markdown(table_tag):
+    markdown_table = ""
+
+    for row in table_tag.find_all("tr"):
+        row_data = []
+
+        for cell in row.find_all(["th", "td"]):
+            cell_text = cell.get_text().strip().replace("\n", " ")
+            row_data.append(cell_text)
+
+        markdown_table += "| " + " | ".join(row_data) + " |\n"
+
+    # Add the header separator after the first row
+    header_separator = "| " + " | ".join(["-" * len(cell) for cell in row_data]) + " |\n"
+    markdown_table = markdown_table.split("\n", 1)
+    markdown_table.insert(1, header_separator)
+    markdown_table = "\n".join(markdown_table)
+
+    return markdown_table
 
 def convert_html_to_markdown(input_file, output_file, omit_links, debug):
     try:
